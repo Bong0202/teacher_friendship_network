@@ -1,0 +1,271 @@
+---
+title: "Final Project"
+author: "Linh Nguyen"
+date: "3/1/2022"
+output:
+  word_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Table of content
+
+  1. title, author information, and a table of contents
+  
+  2. narrative summary of the project (1 - 2 paragraphs explaining what you did)
+  
+  3. a code chunk showing your setup process, including the packages used and reading of the data sets and creating graph objects
+  
+  4. network plots for each data set used include narrative summaries of my strategies for each network above the code chunk that includes the plot
+  
+  5. a final (1-2 paragraph) summary of what I want readers to take away from my work 
+  
+#   Summary:
+
+  The dataset used in this project was from Cohesion and Centrailty, which is teacher friendship network. I think I can advance the skills by utilizing this dataset. I utilized the skills combined from that assignment, along with advancing the dataset with the markdown and the knowledge that I learnt from community assignment. I think after having chance to take part in doing these assignments, I really enjoy the combination of plot visualizations with markdown, it is perfect for R!! 
+  The steps that I approach this assignments are:
+  
+  1. Load package and dataset, then convert into data and graph object
+  
+  2. Find the weak components, density, compactness, global clustering (transitivity), in degree, betweenness, then finish this part with a plot of betweenness
+  
+  3. Moving on to the next interesting part with lots of plots, which are fast greedy, dendrogram, edge betweenness, multilevel, infomap, then par those plots together
+  
+  4. Finish up with heatmap (this is someting new and really interesting!!)
+
+  Personally, I think the assignment altogether brings me a totally new experiences with the dataset. I learned a lot by every step of the assignment. Especially the later part (3,4), the plots help explain the 1,2 part as well since it is visually explained. There are some nodes that are not connected to each other, but mostly are teacher who know each other pretty well, that is why it forms a big cluster in the plot. If i have to pick the part that I think that really makes used in real life experiences us part 3, I think it explains well every other part by just looking at the plot. 
+
+  About the dataset:
+  
+  - friendship: this matrix shows directed friendship ties among teachers (i.e., a directed tie, i->j, is present if teacher i indicates they are friends with teacher j.
+  - attribute_file: contains node-level characteristics of the teachers (and principal) in the network. 
+  
+```{r, echo = FALSE}
+library(igraph)
+friendship <- read.csv("/Users/linhnguyen/Downloads/School28_MooDal_Friends.csv", header = TRUE, row.names = 1)
+attribute_file <- read.csv("/Users/linhnguyen/Downloads/School28_MooDal_attr-1.csv", header = TRUE, as.is = T)
+```
+
+# Convert into data and graph object
+```{r, echo = FALSE}
+
+teachers<- as.matrix(friendship)
+teacher_friendship <- graph_from_adjacency_matrix(teachers, mode = "undirected")
+
+```
+
+
+
+
+# Find the weak components
+```{r, echo = FALSE}
+
+teacher_friendship_comp <- components(teacher_friendship)
+components(teacher_friendship)
+```
+
+
+# Find the density
+```{r, echo = FALSE}
+edge_density(teacher_friendship, loops=F) 
+```
+
+
+# Find the compactness
+
+```{r, echo = FALSE}
+compactness <- function(teacher_friendship) {
+  gra.geo <- distances(teacher_friendship) ## generate geodesic distances
+  gra.rdist <- 1/gra.geo  ## reciprocal of geodesics
+  diag(gra.rdist) <- NA   ## assign NA to diagonal
+  gra.rdist[gra.rdist == Inf] <- 0 ## replace infinity with 0
+  # Compactness = mean of reciprocal distances
+  comp.igph <- mean(gra.rdist, na.rm=TRUE) 
+  return(comp.igph)
+}
+compactness(teacher_friendship)
+```
+
+
+```{r, echo = FALSE}
+
+dyad_census(teacher_friendship) # mutuals assymetrics and nulls
+
+reciprocity(teacher_friendship, mode = c("default")) ## arc reciprocity
+
+reciprocity(teacher_friendship, mode = c("ratio")) ## dyadic reciprocity
+```
+
+
+
+
+# Global clustering = transitivity
+
+```{r, echo = FALSE}
+transitivity(teacher_friendship, type="global")
+```
+
+
+
+
+
+# In degree
+```{r, echo = FALSE}
+degree(teacher_friendship, mode="in")
+```
+
+
+
+
+
+# Betweeness
+```{r, echo = FALSE}
+
+between <- betweenness(teacher_friendship, directed = TRUE, normalized = FALSE)
+bet_normalized <- betweenness(teacher_friendship, directed = TRUE, normalized = TRUE)
+bet.dat <- data.frame(between, bet_normalized)
+bet.dat
+```
+
+```{r, echo = FALSE}
+friendship_indeg <- degree(teacher_friendship, mode="in")
+par(mfrow=c(1,2))
+set.seed(2022)
+plot(teacher_friendship, edge.arrow.size=.2, vertex.label=NA, vertex.color="tomato",
+     vertex.size=friendship_indeg)
+title(main="in degree", line= -5)
+set.seed(2022)
+plot(teacher_friendship, edge.arrow.size=.2, vertex.label=NA, vertex.color="tomato",
+     vertex.size=between*.1, main="Nodes weighted by betweenness centrality")
+title(main="betweenness", line= -5)
+```
+
+# Fast greedy
+```{r, echo = FALSE}
+data(teacher_friendship)
+set.seed(5)
+plot(teacher_friendship, vertex.labels=NA, main="teacher friendship community detection")
+```
+
+
+# Dendrogram
+```{r, echo = FALSE}
+fast <- fastgreedy.community(teacher_friendship) 
+dendPlot(fast) # provides a dendrogram of the hierarchical community 
+set.seed(5)
+plot( fast,teacher_friendship, vertex.labels=NA, main="Fastgreedy", vertex.label = NA)
+```
+
+
+
+# Modularity
+
+```{r, echo = FALSE}
+modularity(fast)
+```
+
+
+# Length
+
+```{r, echo = FALSE}
+length(fast)
+```
+
+
+# Membership
+```{r, echo = FALSE}
+membership(fast)
+```
+
+
+# Community sizes
+
+```{r, echo = FALSE}
+sizes(fast)
+```
+
+
+
+# Network based on membership
+```{r, echo = FALSE}
+set.seed(5)
+plot(teacher_friendship,vertex.label.color="black", vertex.size=14, vertex.label.size=1,
+     vertex.color=membership(fast), main="Network based on membership")
+```
+
+
+
+## Color Brewer
+
+```{r, echo = FALSE}
+library(RColorBrewer)
+colors <- brewer.pal(length(fast),'Dark2') # create a palette 
+V(teacher_friendship)$color=colors[membership(fast)] # assign vertices to a color based on membership
+set.seed(5)
+plot(teacher_friendship, main = "Color Brewer", vertex.label=NA)
+```
+
+
+
+
+# Edge Betweenness
+
+```{r, echo = FALSE}
+gv <- edge.betweenness.community(teacher_friendship, modularity = TRUE)
+dendPlot(gv, mode="hclust")
+```
+
+
+
+# Plot 
+
+
+```{r, echo = FALSE}
+set.seed(5)
+plot(gv,teacher_friendship,vertex.label.color="black",main = "Plot", vertex.size=14, vertex.label.size=1)
+```
+## Modularity
+```{r, echo =FALSE}
+modularity(gv)
+```
+
+## Multilevel
+```{r, echo =FALSE}
+multi <- multilevel.community(teacher_friendship)
+set.seed(5)
+plot(multi,teacher_friendship,vertex.label.color="black", vertex.size=14,main = "Multilevel", vertex.label.size=1)
+```
+## Modularity
+
+```{r, echo =FALSE}
+modularity(multi)
+```
+
+## Infomap
+```{r, echo =FALSE}
+info <- infomap.community(teacher_friendship)
+set.seed(5)
+plot(info, teacher_friendship, main = "Infomap", edge.arrow.size=.2, vertex.label=NA)
+```
+
+# Par 
+```{r, echo =FALSE}
+par(mfrow = c(2,4))
+set.seed(5)
+plot( fast,teacher_friendship, vertex.labels=NA, main="Dendrogram: Fastgreedy", sub= "Modularity = 0.6077806", vertex.label = NA)
+set.seed(5)
+plot(gv,teacher_friendship,vertex.label.color="black",main = "Edge Betweenness", sub= "Modularity = 0.5994898", vertex.size=14, vertex.label.size=1)
+set.seed(5)
+plot(multi,teacher_friendship,vertex.label.color="black", vertex.size=14,main = "Multilevel", sub= "Modularity = 0.6077806", vertex.label.size=1)
+set.seed(5)
+plot(info,teacher_friendship,vertex.label.color="black", vertex.size=14,main = "Infomap", vertex.label.size=1)
+```
+
+# Heatmap
+```{r, echo =FALSE}
+palf <- colorRampPalette(c("gold", "dark orange"))
+heatmap(teachers, Rowv = NA, Colv = NA, col = palf(100), scale = "none", margins = c(10,10))
+```
