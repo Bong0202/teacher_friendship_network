@@ -14,7 +14,7 @@ This project experiments on how network measuring methods work on the dataset te
   
 #   Summary:
 
-  The dataset used in this project was from Cohesion and Centrailty, which is teacher friendship network. I think I can advance the skills by utilizing this dataset. I utilized the skills combined from that assignment, along with advancing the dataset with the markdown and the knowledge that I learnt from community assignment. I think after having chance to take part in doing these assignments, I really enjoy the combination of plot visualizations with markdown, it is perfect for R!! 
+  The dataset used in this project is teacher friendship network. I think I can advance the skills by utilizing this dataset. I utilized the skills combined from that assignment, along with advancing the dataset with the markdown and the knowledge that I learnt from community assignment. I think after having chance to take part in doing these assignments, I really enjoy the combination of plot visualizations with markdown, it is perfect for R!! 
   The steps that I approach this assignments are:
   
   1. Load package and dataset, then convert into data and graph object
